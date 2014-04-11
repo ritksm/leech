@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="container">
+    <div class="row text-center">
+        <span class="logo">Leech</span>
+    </div>
+    <div class="row">
+        <form action="/generate/" method="post" role="form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="urlInput">Source URL</label>
+                <input type="text" class="form-control" id="urlInput" name="url" placeholder="Enter URL">
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Shorten!</button>
+            </div>
+        </form>
+    </div>
+    <div class="row">
+        <table class="table">
+            <thead>
+                <tr>
+                    <td>短地址</td>
+                    <td>源地址</td>
+                    <td>统计数据</td>
+                </tr>
+            </thead>
+            <tbody>
+                {% for slug in slugs %}
+                    <tr>
+                        <td><a href="{{ redirect_base_url }}{{ slug.slug }}" target="_blank">{{ redirect_base_url }}{{ slug.slug }}</a></td>
+                        <td><a href="{{ slug.source_url }}" target="_blank">{{ slug.source_url }}</a></td>
+                        <td><a href="{{ stat_base_url }}{{ slug.slug }}" target="_blank">点击查看</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
