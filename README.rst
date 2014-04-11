@@ -13,6 +13,7 @@ Usage
 
 1. Clone the code:
     $ git clone https://github.com/ritksm/leech.git
+
     $ cd leech
 2. Install required packages:
     $ pip install -r requirements.txt (You may use virtualenv here)
@@ -22,7 +23,8 @@ Usage
     $ python manage.py syncdb
 5. Run Django server:
     $ python manage.py runserver
-6. Visit http://localhost:8000/
+6. Visit:
+    http://localhost:8000/
 
 License
 -------
