@@ -23,6 +23,7 @@
                 <tr>
                     <td>短地址</td>
                     <td>源地址</td>
+                    <td>点击数</td>
                     <td>统计数据</td>
                 </tr>
             </thead>
@@ -31,6 +32,7 @@
                     <tr>
                         <td><a href="{{ redirect_base_url }}{{ slug.slug }}" target="_blank">{{ redirect_base_url }}{{ slug.slug }}</a></td>
                         <td><a href="{{ slug.source_url }}" target="_blank">{{ slug.source_url }}</a></td>
+                        <td>{{ slug.click_count }}</td>
                         <td><a href="{{ stat_base_url }}{{ slug.slug }}" target="_blank">点击查看</a></td>
                     </tr>
                 {% endfor %}

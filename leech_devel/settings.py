@@ -92,6 +92,8 @@ REDIS_HOST = local_settings.REDIS_HOST
 
 REDIS_SHORTEN_URL_NAME = 'leech:url:{slug}'
 
+REDIS_CLICK_COUNT_NAME = 'leech:url:click:{slug}'
+
 COOKIE_NAME_FOR_UUID = 'leech_user'
 
 HOST = local_settings.HOST

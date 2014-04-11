@@ -3,23 +3,15 @@
 
 __author__ = 'Jack River'
 
+import redis
 import uuid
 from django.conf import settings
 from django.views.generic import TemplateView, View
 from django.http.response import HttpResponseBadRequest, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from leech.models import *
-import json
 import threading
 import httpagentparser
-
-
-def _encode_cookie_json_data(data):
-    return json.dumps(data)
-
-
-def _decode_cookie_json_data(cookie_data):
-    return json.loads(cookie_data)
 
 
 class IndexView(TemplateView):
@@ -66,7 +58,7 @@ class GenerateView(View):
         else:
             user_uuid = request.COOKIES.get(settings.COOKIE_NAME_FOR_UUID)
 
-        shorten_url = ShortenUrl.objects.shorten_url(url=source_url, user_uuid=user_uuid)
+        ShortenUrl.objects.shorten_url(url=source_url, user_uuid=user_uuid)
 
         response = HttpResponseRedirect(reverse('index'))
         response.set_cookie(settings.COOKIE_NAME_FOR_UUID, user_uuid)
@@ -92,7 +84,15 @@ class RedirectLoggerThread(threading.Thread):
         return ip
 
     def run(self):
-        click_log = ClickLog.objects.create_log(self.slug,
+        shorten_url = ShortenUrl.objects.filter(slug=self.slug)
+        if not shorten_url.exists():
+            return
+        else:
+            shorten_url = shorten_url[0]
+
+        shorten_url.click()
+
+        click_log = ClickLog.objects.create_log(shorten_url,
                                                 self.request.META.get('HTTP_USER_AGENT'),
                                                 self._get_client_ip())
         if click_log:

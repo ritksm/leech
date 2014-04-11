@@ -9,6 +9,7 @@ from django.conf import settings
 from django.db import models
 from leech.short_url import UrlEncoder
 from model_utils import Choices
+from django.db.models import F
 
 
 class ShortenUrlManager(models.Manager):
@@ -77,7 +78,6 @@ class ShortenUrl(models.Model):
     source_url = models.CharField(max_length=255, verbose_name='Source URL')
     slug = models.CharField(max_length=32, verbose_name='URL Slug', null=True)
     create_time = models.DateTimeField(verbose_name='Create Time', auto_now_add=True)
-    click_count = models.BigIntegerField(verbose_name='Click Count', default=0)
     user_uuid = models.CharField(max_length=64, verbose_name='UUID', null=True)
 
     class Meta(object):
@@ -91,18 +91,26 @@ class ShortenUrl(models.Model):
     def __unicode__(self):
         return self.__repr__()
 
+    def click(self):
+        """ process the clicking
+        """
+        redis_server = redis.Redis(**settings.REDIS_HOST)
+        redis_server.incr(settings.REDIS_CLICK_COUNT_NAME.format(slug=self.slug))  # increase click count
+
+    def click_count(self):
+        """ get click count from Redis
+        """
+        count = redis.Redis(**settings.REDIS_HOST).get(settings.REDIS_CLICK_COUNT_NAME.format(slug=self.slug))
+        if not count:
+            count = 0
+        return count
+
 
 class ClickLogManager(models.Manager):
     """ url click log model manager
     """
 
-    def create_log(self, slug, user_agent, remote_address):
-        shorten_url = ShortenUrl.objects.filter(slug=slug)
-        if not shorten_url.exists():
-            return None
-        else:
-            shorten_url = shorten_url[0]
-
+    def create_log(self, shorten_url, user_agent, remote_address):
         return super(ClickLogManager, self).create(shorten_url=shorten_url,
                                                    user_agent=user_agent,
                                                    remote_address=remote_address)
@@ -170,4 +178,5 @@ class ClickLogAttribute(models.Model):
 
 __all__ = ['ShortenUrl',
            'ClickLog',
-           'ClickLogAttribute']
+           'ClickLogAttribute',
+           ]
