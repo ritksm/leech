@@ -101,3 +101,5 @@ HOST = local_settings.HOST
 REDIRECT_BASE_URL = HOST + '/go/'
 
 STATISTIC_BASE_URL = HOST + '/stat/'
+
+API_CLICK_COUNT_BASE_URL = HOST + '/api/click_count/'

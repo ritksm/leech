@@ -3,11 +3,12 @@
 
 __author__ = 'Jack River'
 
-import redis
+import json
 import uuid
 from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView, View
-from django.http.response import HttpResponseBadRequest, HttpResponseRedirect
+from django.http.response import HttpResponseBadRequest, HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from leech.models import *
 import threading
@@ -19,7 +20,7 @@ class IndexView(TemplateView):
     """
 
     template_name = 'index.html'
-    
+
     def get_context_data(self, **kwargs):
         context = super(IndexView, self).get_context_data(**kwargs)
 
@@ -125,6 +126,40 @@ class SlugRedirectView(View):
             return HttpResponseRedirect(result)
 
 
+class APIGenerateView(View):
+    """ generate shorten url by calling api
+    """
+
+    def post(self, request):
+        source_url = request.POST.get('url', '')
+        if not source_url:
+            return HttpResponseBadRequest()
+
+        shorten_url = ShortenUrl.objects.shorten_url(url=source_url)
+
+        return HttpResponse(json.dumps({'slug': ''.join([settings.REDIRECT_BASE_URL, shorten_url.slug]),
+                                        'count': ''.join([settings.API_CLICK_COUNT_BASE_URL, shorten_url.slug])}),
+                            content_type='application/json')
+
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super(APIGenerateView, self).dispatch(request, *args, **kwargs)
+
+
+class APIClickCountView(View):
+    """ get slug click count
+    """
+
+    def get(self, request, slug):
+        shorten_url = ShortenUrl.objects.filter(slug=slug)
+        if not shorten_url.exists():
+            return HttpResponseBadRequest()
+
+        return HttpResponse(json.dumps({'count': shorten_url[0].click_count()}), content_type='application/json')
+
+
 __all__ = ['IndexView',
            'GenerateView',
-           'SlugRedirectView',]
+           'SlugRedirectView',
+           'APIGenerateView',
+           'APIClickCountView',]

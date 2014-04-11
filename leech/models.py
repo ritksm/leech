@@ -103,7 +103,7 @@ class ShortenUrl(models.Model):
         count = redis.Redis(**settings.REDIS_HOST).get(settings.REDIS_CLICK_COUNT_NAME.format(slug=self.slug))
         if not count:
             count = 0
-        return count
+        return int(count)
 
 
 class ClickLogManager(models.Manager):
