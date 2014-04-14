@@ -53,7 +53,7 @@ class ShortenUrlManager(models.Manager):
         source_url = self.filter(slug=slug)
         if source_url.exists():
             source_url = source_url[0]
-            self._save_to_redis_cahce(source_url.source_url, source_url.slug)
+            self._save_to_redis_cache(source_url.source_url, source_url.slug)
             return source_url.source_url
 
     def _save_to_redis_cache(self, source_url, slug):
