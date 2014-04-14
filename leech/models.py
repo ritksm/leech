@@ -115,6 +115,9 @@ class ClickLogManager(models.Manager):
                                                    user_agent=user_agent,
                                                    remote_address=remote_address)
 
+    def get_logs_by_slug(self, slug):
+        return self.filter(shorten_url__slug=slug)
+
 
 class ClickLog(models.Model):
     """ url click log

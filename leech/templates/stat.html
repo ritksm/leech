@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load tz %}
+
+{% block body %}
+    <div class="container">
+        <div class="row text-center">
+            <span class="logo">Leech</span>
+        </div>
+        <div class="row">
+            <div class="panel panel-primary">
+                <div class="panel-heading">统计数据</div>
+                <div class="panel-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>统计项</th>
+                                <th>值</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>点击数</td>
+                                <td>{{ click_count }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="panel panel-default">
+                <div class="panel-heading">请求列表</div>
+                <div class="panel-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>User-Agent</th>
+                                <th>来源IP</th>
+                                <th>点击时间</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in click_logs %}
+                                <tr>
+                                    <td>{{ log.user_agent }}</td>
+                                    <td>{{ log.remote_address }}</td>
+                                    <td>{{ log.click_time|timezone:"Asia/Shanghai"|date:"Y-m-d H:i" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <a href="/"><button class="btn btn-primary">返回首页</button></a>
+        </div>
+    </div>
+{% endblock %}

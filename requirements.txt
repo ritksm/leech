@@ -2,3 +2,4 @@ django
 redis
 django-model-utils
 httpagentparser
+pytz

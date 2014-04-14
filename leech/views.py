@@ -158,8 +158,38 @@ class APIClickCountView(View):
         return HttpResponse(json.dumps({'count': shorten_url[0].click_count()}), content_type='application/json')
 
 
+class StatisticView(TemplateView):
+    """ show statistic of shorten url
+    """
+
+    template_name = 'stat.html'
+
+    def __init__(self):
+        super(StatisticView, self).__init__()
+        self.slug = None
+
+    def get_context_data(self, **kwargs):
+        context = super(StatisticView, self).get_context_data(**kwargs)
+
+        shorten_url = ShortenUrl.objects.filter(slug=self.slug)
+        if not shorten_url.exists():
+            return HttpResponseBadRequest()
+        else:
+            shorten_url = shorten_url[0]
+
+        context['click_logs'] = shorten_url.click_logs.all()
+        context['click_count'] = shorten_url.click_count()
+
+        return context
+
+    def get(self, request, *args, **kwargs):
+        self.slug = kwargs.pop('slug')
+        return super(StatisticView, self).get(request, *args, **kwargs)
+
+
 __all__ = ['IndexView',
            'GenerateView',
            'SlugRedirectView',
            'APIGenerateView',
-           'APIClickCountView',]
+           'APIClickCountView',
+           'StatisticView',]
