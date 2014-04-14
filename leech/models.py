@@ -3,7 +3,11 @@
 
 __author__ = 'Jack River'
 
-from urllib.parse import urlparse
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
+
 import redis
 from django.conf import settings
 from django.db import models
