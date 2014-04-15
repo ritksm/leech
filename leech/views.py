@@ -137,7 +137,8 @@ class APIGenerateView(View):
 
         shorten_url = ShortenUrl.objects.shorten_url(url=source_url)
 
-        return HttpResponse(json.dumps({'slug': ''.join([settings.REDIRECT_BASE_URL, shorten_url.slug]),
+        return HttpResponse(json.dumps({'link': ''.join([settings.REDIRECT_BASE_URL, shorten_url.slug]),
+                                        'slug': shorten_url.slug,
                                         'count': ''.join([settings.API_CLICK_COUNT_BASE_URL, shorten_url.slug])}),
                             content_type='application/json')
 
