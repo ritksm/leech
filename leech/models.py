@@ -9,16 +9,16 @@ except ImportError:
     from urlparse import urlparse
 
 import redis
+from hashids import Hashids
 from django.conf import settings
 from django.db import models
-from leech.short_url import UrlEncoder
 from model_utils import Choices
-from django.db.models import F
 
 
 class ShortenUrlManager(models.Manager):
     """ shorten url model manager
     """
+
     def shorten_url(self, url, user_uuid=None):
         """ Adds a long URL to the database
         """
@@ -31,7 +31,8 @@ class ShortenUrlManager(models.Manager):
 
         shorten_url = super(ShortenUrlManager, self).create(source_url=url,
                                                             user_uuid=user_uuid)
-        slug = UrlEncoder().encode_url(shorten_url.pk)
+        slug = Hashids(salt=settings.HASH_ID_SALT,
+                       min_length=settings.HASH_ID_MIN_LENGTH).encrypt(shorten_url.pk)
         shorten_url.slug = slug
         shorten_url.save()
 
@@ -186,4 +187,4 @@ class ClickLogAttribute(models.Model):
 __all__ = ['ShortenUrl',
            'ClickLog',
            'ClickLogAttribute',
-           ]
+]

@@ -40,3 +40,5 @@ REDIS_HOST = {
 }
 
 HOST = 'http://localhost:8000'
+
+HASH_ID_SALT = 'hash salt'

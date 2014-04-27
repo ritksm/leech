@@ -103,3 +103,6 @@ REDIRECT_BASE_URL = HOST + '/go/'
 STATISTIC_BASE_URL = HOST + '/stat/'
 
 API_CLICK_COUNT_BASE_URL = HOST + '/api/click_count/'
+
+HASH_ID_SALT = local_settings.HASH_ID_SALT
+HASH_ID_MIN_LENGTH = 3
