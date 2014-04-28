@@ -6,3 +6,4 @@ pytz
 hashids
 tornado
 tornado-redis
+fabric
