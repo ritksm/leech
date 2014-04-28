@@ -12,7 +12,6 @@ from django.http.response import HttpResponseBadRequest, HttpResponseRedirect, H
 from django.core.urlresolvers import reverse
 from leech.models import *
 import threading
-import httpagentparser
 
 
 class IndexView(TemplateView):
@@ -93,23 +92,9 @@ class RedirectLoggerThread(threading.Thread):
 
         shorten_url.click()
 
-        click_log = ClickLog.objects.create_log(shorten_url,
-                                                self.request.META.get('HTTP_USER_AGENT'),
-                                                self._get_client_ip())
-        if click_log:
-            # parse attributes from user-agent
-            result = httpagentparser.detect(click_log.user_agent)
-            os = result.get('os', {})
-            browser = result.get('browser', {})
-            dist = result.get('dist', {})
-
-            attribute_type = ClickLogAttribute.ATTRIBUTE_TYPE
-
-            click_log.set_attribute(attribute_type.os, os.get('name', 'Unknown'))
-            click_log.set_attribute(attribute_type.browser, browser.get('name', 'Unknown'))
-            click_log.set_attribute(attribute_type.browser_version, browser.get('version', 'Unknown'))
-            click_log.set_attribute(attribute_type.distribution, dist.get('name', 'Unknown'))
-            click_log.set_attribute(attribute_type.distribution_version, dist.get('name', 'Unknown'))
+        ClickLog.objects.create_log(shorten_url,
+                                    self.request.META.get('HTTP_USER_AGENT'),
+                                    self._get_client_ip())
 
 
 class SlugRedirectView(View):

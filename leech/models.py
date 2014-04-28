@@ -8,11 +8,13 @@ try:
 except ImportError:
     from urlparse import urlparse
 
+import datetime
 import redis
 from hashids import Hashids
 from django.conf import settings
 from django.db import models
 from model_utils import Choices
+import httpagentparser
 
 
 class ShortenUrlManager(models.Manager):
@@ -115,13 +117,43 @@ class ClickLogManager(models.Manager):
     """ url click log model manager
     """
 
-    def create_log(self, shorten_url, user_agent, remote_address):
-        return super(ClickLogManager, self).create(shorten_url=shorten_url,
-                                                   user_agent=user_agent,
-                                                   remote_address=remote_address)
+    def create_log(self, shorten_url, user_agent, remote_address, click_time=None):
+        click_log = super(ClickLogManager, self).create(shorten_url=shorten_url,
+                                                        user_agent=user_agent,
+                                                        remote_address=remote_address,
+                                                        click_time=click_time)
+
+        if click_log:
+            # parse attributes from user-agent
+            result = httpagentparser.detect(click_log.user_agent)
+            os = result.get('os', {})
+            browser = result.get('browser', {})
+            dist = result.get('dist', {})
+
+            attribute_type = ClickLogAttribute.ATTRIBUTE_TYPE
+
+            click_log.set_attribute(attribute_type.os, os.get('name', 'Unknown'))
+            click_log.set_attribute(attribute_type.browser, browser.get('name', 'Unknown'))
+            click_log.set_attribute(attribute_type.browser_version, browser.get('version', 'Unknown'))
+            click_log.set_attribute(attribute_type.distribution, dist.get('name', 'Unknown'))
+            click_log.set_attribute(attribute_type.distribution_version, dist.get('name', 'Unknown'))
+
+        return click_log
 
     def get_logs_by_slug(self, slug):
         return self.filter(shorten_url__slug=slug)
+
+    def create_log_by_redis_log(self, log):
+        user_agent = log['user-agent']
+        remote_address = log['ip']
+        shorten_url = ShortenUrl.objects.get(slug=log['slug'])
+        click_time = datetime.datetime.fromtimestamp(log['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
+        log = self.create_log(shorten_url, user_agent, remote_address, click_time=click_time)
+
+        if log:
+            # click the url if created from redis log
+            shorten_url.click()
+        return log
 
 
 class ClickLog(models.Model):
