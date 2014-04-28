@@ -8,6 +8,7 @@ try:
 except ImportError:
     from urlparse import urlparse
 
+import pytz
 import datetime
 import redis
 from hashids import Hashids
@@ -118,6 +119,8 @@ class ClickLogManager(models.Manager):
     """
 
     def create_log(self, shorten_url, user_agent, remote_address, click_time=None):
+        if not click_time:
+            click_time = datetime.datetime.now().replace(tzinfo=pytz.timezone(settings.TIME_ZONE))
         click_log = super(ClickLogManager, self).create(shorten_url=shorten_url,
                                                         user_agent=user_agent,
                                                         remote_address=remote_address,
@@ -147,7 +150,7 @@ class ClickLogManager(models.Manager):
         user_agent = log['user-agent']
         remote_address = log['ip']
         shorten_url = ShortenUrl.objects.get(slug=log['slug'])
-        click_time = datetime.datetime.fromtimestamp(log['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
+        click_time = datetime.datetime.fromtimestamp(log['timestamp']).replace(tzinfo=pytz.timezone(settings.TIME_ZONE))
         log = self.create_log(shorten_url, user_agent, remote_address, click_time=click_time)
 
         if log:
@@ -164,7 +167,7 @@ class ClickLog(models.Model):
     shorten_url = models.ForeignKey(ShortenUrl, verbose_name='Shorten URL', related_name='click_logs')
     user_agent = models.CharField(max_length=255, verbose_name='User Agent')
     remote_address = models.CharField(max_length=64, verbose_name='Remote Address')
-    click_time = models.DateTimeField(verbose_name='Click Time', auto_now_add=True)
+    click_time = models.DateTimeField(verbose_name='Click Time')
 
     def set_attribute(self, name, value):
         return ClickLogAttribute.objects.create(click_log=self,
