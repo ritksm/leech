@@ -57,7 +57,7 @@ class Application(tornado.web.Application):
 def main():
     tornado.options.parse_command_line()
     app = Application()
-    app.listen(options.port)
+    app.listen(options.port, xheaders=True)
     tornado.ioloop.IOLoop.instance().start()
 
 
