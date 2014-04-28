@@ -6,6 +6,8 @@ __author__ = 'Jack River'
 import time
 import json
 import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'leech_devel.settings'
 from django.conf import settings as django_settings
 import tornado.gen
