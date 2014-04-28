@@ -39,7 +39,7 @@ class IndexView(TemplateView):
         response = super(IndexView, self).get(request, *args, **kwargs)
         # set uuid cookie
         if not settings.COOKIE_NAME_FOR_UUID in self.request.COOKIES.keys():
-            response.set_cookie(settings.COOKIE_NAME_FOR_UUID, uuid.uuid4())
+            response.set_cookie(settings.COOKIE_NAME_FOR_UUID, uuid.uuid4(), max_age=31536000)
 
         return response
 
@@ -61,7 +61,7 @@ class GenerateView(View):
         ShortenUrl.objects.shorten_url(url=source_url, user_uuid=user_uuid)
 
         response = HttpResponseRedirect(reverse('index'))
-        response.set_cookie(settings.COOKIE_NAME_FOR_UUID, user_uuid)
+        response.set_cookie(settings.COOKIE_NAME_FOR_UUID, user_uuid, max_age=31536000)
 
         return response
 
