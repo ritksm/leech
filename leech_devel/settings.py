@@ -38,6 +38,7 @@ EXTERNAL_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'south',
 ]
 
 INTERNAL_APPS = [

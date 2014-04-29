@@ -132,6 +132,24 @@ class APIGenerateView(View):
         return super(APIGenerateView, self).dispatch(request, *args, **kwargs)
 
 
+class RemarksEditView(View):
+    """ edit url remarks
+    """
+
+    def post(self, request):
+        slug_id = request.POST.get('pk', None)
+        remarks = request.POST.get('remarks', None)
+
+        if slug_id and remarks:
+            url = ShortenUrl.objects.filter(pk=int(slug_id))
+            if url.exists():
+                url = url[0]
+                url.remarks = remarks
+                url.save()
+
+        return HttpResponseRedirect('/')
+
+
 class APIClickCountView(View):
     """ get slug click count
     """
@@ -178,4 +196,5 @@ __all__ = ['IndexView',
            'SlugRedirectView',
            'APIGenerateView',
            'APIClickCountView',
-           'StatisticView',]
+           'StatisticView',
+           'RemarksEditView',]

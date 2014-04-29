@@ -85,6 +85,7 @@ class ShortenUrl(models.Model):
 
     source_url = models.CharField(max_length=255, verbose_name='Source URL')
     slug = models.CharField(max_length=32, verbose_name='URL Slug', null=True)
+    remarks = models.CharField(max_length=255, verbose_name='Remarks', blank=True, default='')
     create_time = models.DateTimeField(verbose_name='Create Time', auto_now_add=True)
     user_uuid = models.CharField(max_length=64, verbose_name='UUID', null=True)
 

@@ -7,3 +7,4 @@ hashids
 tornado
 tornado-redis
 fabric
+south
