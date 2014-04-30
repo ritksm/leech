@@ -47,7 +47,7 @@
                         <tbody>
                             {% for log in click_logs %}
                                 <tr>
-                                    <td>{{ log.user_agent }}</td>
+                                    <td><span class="user-agent-span" data-target="tooltip" data-placement="bottom" title="{{ log.user_agent }}">{{ log.user_agent | truncatechars:70 }}</span></td>
                                     <td>{{ log.remote_address }}</td>
                                     <td>{{ log.click_time|timezone:"Asia/Shanghai"|date:"Y-m-d H:i" }}</td>
                                 </tr>
@@ -74,9 +74,11 @@
                         "bFilter": false,
                         "bSort": false,
                         "bInfo": false,
-                        "bAutoWidth": true
+                        "bAutoWidth": false
                     }
             );
+
+            $('.user-agent-span').tooltip();
 
         });
     </script>
