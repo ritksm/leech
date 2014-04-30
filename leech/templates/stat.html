@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 {% load tz %}
+{% load staticfiles %}
+
+{% block extra_headers %}
+    <link rel="stylesheet" type="text/css" media="screen" href="{% static "css/jquery.dataTables.css" %}">
+{% endblock %}
 
 {% block body %}
     <div class="container">
@@ -29,9 +34,9 @@
         </div>
         <div class="row">
             <div class="panel panel-default">
-                <div class="panel-heading">请求列表</div>
+                <div class="panel-heading">最新请求列表</div>
                 <div class="panel-body">
-                    <table class="table">
+                    <table class="table" id="requestTable">
                         <thead>
                             <tr>
                                 <th>User-Agent</th>
@@ -56,4 +61,23 @@
             <a href="/"><button class="btn btn-primary">返回首页</button></a>
         </div>
     </div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{% static "js/libs/jquery.dataTables.min.js" %}"></script>
+    <script>
+        $(document).ready(function () {
+            $('#requestTable').dataTable(
+                    {
+                        "bPaginate": true,
+                        "bLengthChange": false,
+                        "bFilter": false,
+                        "bSort": false,
+                        "bInfo": false,
+                        "bAutoWidth": true
+                    }
+            );
+
+        });
+    </script>
 {% endblock %}

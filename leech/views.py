@@ -181,7 +181,7 @@ class StatisticView(TemplateView):
         else:
             shorten_url = shorten_url[0]
 
-        context['click_logs'] = shorten_url.click_logs.all()
+        context['click_logs'] = shorten_url.click_logs.all()[:100]
         context['click_count'] = shorten_url.click_count()
 
         return context
