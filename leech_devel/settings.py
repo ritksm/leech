@@ -38,6 +38,7 @@ EXTERNAL_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'south',
 ]
 
 INTERNAL_APPS = [
@@ -45,6 +46,13 @@ INTERNAL_APPS = [
 ]
 
 INSTALLED_APPS = EXTERNAL_APPS + INTERNAL_APPS
+
+
+from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS as TCP
+
+TEMPLATE_CONTEXT_PROCESSORS = TCP + (
+    'django.core.context_processors.request',
+)
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -92,6 +100,10 @@ REDIS_HOST = local_settings.REDIS_HOST
 
 REDIS_SHORTEN_URL_NAME = 'leech:url:{slug}'
 
+REDIS_CLICK_COUNT_NAME = 'leech:url:click:{slug}'
+
+REDIS_STAT_LOG_NAME = 'leech:url:stat:logs'
+
 COOKIE_NAME_FOR_UUID = 'leech_user'
 
 HOST = local_settings.HOST
@@ -99,3 +111,10 @@ HOST = local_settings.HOST
 REDIRECT_BASE_URL = HOST + '/go/'
 
 STATISTIC_BASE_URL = HOST + '/stat/'
+
+API_CLICK_COUNT_BASE_URL = HOST + '/api/click_count/'
+
+HASH_ID_SALT = local_settings.HASH_ID_SALT
+HASH_ID_MIN_LENGTH = 3
+
+VIRTUALENV_PYTHON_PATH = local_settings.VIRTUALENV_PYTHON_PATH

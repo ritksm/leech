@@ -40,3 +40,7 @@ REDIS_HOST = {
 }
 
 HOST = 'http://localhost:8000'
+
+HASH_ID_SALT = 'hash salt'
+
+VIRTUALENV_PYTHON_PATH = '/opt/virtualenv/leech/bin/python'

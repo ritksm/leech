@@ -3,23 +3,17 @@
 
 __author__ = 'Jack River'
 
+import json
 import uuid
 from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView, View
-from django.http.response import HttpResponseBadRequest, HttpResponseRedirect
+from django.http.response import HttpResponseBadRequest, HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from leech.models import *
-import json
 import threading
-import httpagentparser
-
-
-def _encode_cookie_json_data(data):
-    return json.dumps(data)
-
-
-def _decode_cookie_json_data(cookie_data):
-    return json.loads(cookie_data)
+from django.contrib.auth.models import User
+from django.contrib import auth
 
 
 class IndexView(TemplateView):
@@ -27,15 +21,18 @@ class IndexView(TemplateView):
     """
 
     template_name = 'index.html'
-    
+
     def get_context_data(self, **kwargs):
         context = super(IndexView, self).get_context_data(**kwargs)
 
-        user_uuid = self.request.COOKIES.get(settings.COOKIE_NAME_FOR_UUID, None)
-        if user_uuid:
-            slugs = ShortenUrl.objects.get_by_uuid(user_uuid=user_uuid)
+        if self.request.user.is_authenticated():
+            slugs = ShortenUrl.objects.get_by_user(user=self.request.user)
         else:
-            slugs = []
+            user_uuid = self.request.COOKIES.get(settings.COOKIE_NAME_FOR_UUID, None)
+            if user_uuid:
+                slugs = ShortenUrl.objects.get_by_uuid(user_uuid=user_uuid)
+            else:
+                slugs = []
 
         context['slugs'] = slugs
         context['redirect_base_url'] = settings.REDIRECT_BASE_URL
@@ -47,7 +44,7 @@ class IndexView(TemplateView):
         response = super(IndexView, self).get(request, *args, **kwargs)
         # set uuid cookie
         if not settings.COOKIE_NAME_FOR_UUID in self.request.COOKIES.keys():
-            response.set_cookie(settings.COOKIE_NAME_FOR_UUID, uuid.uuid4())
+            response.set_cookie(settings.COOKIE_NAME_FOR_UUID, uuid.uuid4(), max_age=31536000)
 
         return response
 
@@ -66,10 +63,15 @@ class GenerateView(View):
         else:
             user_uuid = request.COOKIES.get(settings.COOKIE_NAME_FOR_UUID)
 
-        shorten_url = ShortenUrl.objects.shorten_url(url=source_url, user_uuid=user_uuid)
+        if request.user.is_authenticated():
+            # associate url with user
+            ShortenUrl.objects.shorten_url(url=source_url, user=request.user)
+        else:
+            # associate url with user_uuid when user is not authenticated
+            ShortenUrl.objects.shorten_url(url=source_url, user_uuid=user_uuid)
 
         response = HttpResponseRedirect(reverse('index'))
-        response.set_cookie(settings.COOKIE_NAME_FOR_UUID, user_uuid)
+        response.set_cookie(settings.COOKIE_NAME_FOR_UUID, user_uuid, max_age=31536000)
 
         return response
 
@@ -92,23 +94,17 @@ class RedirectLoggerThread(threading.Thread):
         return ip
 
     def run(self):
-        click_log = ClickLog.objects.create_log(self.slug,
-                                                self.request.META.get('HTTP_USER_AGENT'),
-                                                self._get_client_ip())
-        if click_log:
-            # parse attributes from user-agent
-            result = httpagentparser.detect(click_log.user_agent)
-            os = result.get('os', {})
-            browser = result.get('browser', {})
-            dist = result.get('dist', {})
+        shorten_url = ShortenUrl.objects.filter(slug=self.slug)
+        if not shorten_url.exists():
+            return
+        else:
+            shorten_url = shorten_url[0]
 
-            attribute_type = ClickLogAttribute.ATTRIBUTE_TYPE
+        shorten_url.click()
 
-            click_log.set_attribute(attribute_type.os, os.get('name', 'Unknown'))
-            click_log.set_attribute(attribute_type.browser, browser.get('name', 'Unknown'))
-            click_log.set_attribute(attribute_type.browser_version, browser.get('version', 'Unknown'))
-            click_log.set_attribute(attribute_type.distribution, dist.get('name', 'Unknown'))
-            click_log.set_attribute(attribute_type.distribution_version, dist.get('name', 'Unknown'))
+        ClickLog.objects.create_log(shorten_url,
+                                    self.request.META.get('HTTP_USER_AGENT'),
+                                    self._get_client_ip())
 
 
 class SlugRedirectView(View):
@@ -125,6 +121,146 @@ class SlugRedirectView(View):
             return HttpResponseRedirect(result)
 
 
+class APIGenerateView(View):
+    """ generate shorten url by calling api
+    """
+
+    def post(self, request):
+        source_url = request.POST.get('url', '')
+        if not source_url:
+            return HttpResponseBadRequest()
+
+        shorten_url = ShortenUrl.objects.shorten_url(url=source_url)
+
+        return HttpResponse(json.dumps({'link': ''.join([settings.REDIRECT_BASE_URL, shorten_url.slug]),
+                                        'slug': shorten_url.slug,
+                                        'count': ''.join([settings.API_CLICK_COUNT_BASE_URL, shorten_url.slug])}),
+                            content_type='application/json')
+
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super(APIGenerateView, self).dispatch(request, *args, **kwargs)
+
+
+class RemarksEditView(View):
+    """ edit url remarks
+    """
+
+    def post(self, request):
+        slug_id = request.POST.get('pk', None)
+        remarks = request.POST.get('remarks', None)
+
+        if slug_id and remarks:
+            url = ShortenUrl.objects.filter(pk=int(slug_id))
+            if url.exists():
+                url = url[0]
+                url.remarks = remarks
+                url.save()
+
+        return HttpResponseRedirect('/')
+
+
+class APIClickCountView(View):
+    """ get slug click count
+    """
+
+    def get(self, request, slug):
+        shorten_url = ShortenUrl.objects.filter(slug=slug)
+        if not shorten_url.exists():
+            return HttpResponseBadRequest()
+
+        return HttpResponse(json.dumps({'count': shorten_url[0].click_count()}), content_type='application/json')
+
+
+class StatisticView(TemplateView):
+    """ show statistic of shorten url
+    """
+
+    template_name = 'stat.html'
+
+    def __init__(self):
+        super(StatisticView, self).__init__()
+        self.slug = None
+
+    def get_context_data(self, **kwargs):
+        context = super(StatisticView, self).get_context_data(**kwargs)
+
+        shorten_url = ShortenUrl.objects.filter(slug=self.slug)
+        if not shorten_url.exists():
+            return HttpResponseBadRequest()
+        else:
+            shorten_url = shorten_url[0]
+
+        context['click_logs'] = shorten_url.click_logs.all()[:100]
+        context['click_count'] = shorten_url.click_count()
+
+        return context
+
+    def get(self, request, *args, **kwargs):
+        self.slug = kwargs.pop('slug')
+        return super(StatisticView, self).get(request, *args, **kwargs)
+
+
+class LoginView(View):
+    """ user login view
+    """
+
+    def post(self, request):
+        next_url = request.GET.get('next', None)
+        if not next_url:
+            next_url = '/'
+        username = request.POST.get('username', None)
+        password = request.POST.get('password', None)
+
+        if username and password:
+            user = auth.authenticate(username=username, password=password)
+            if user:
+                auth.login(request, user)
+
+        return HttpResponseRedirect(next_url)
+
+
+class LogoutView(View):
+    """ user logout view
+    """
+
+    def get(self, request):
+        if request.user.is_authenticated():
+            auth.logout(request)
+
+        return HttpResponseRedirect('/')
+
+
+class RegisterView(View):
+    """ user register view
+    """
+
+    def post(self, request):
+        next_url = request.GET.get('next', None)
+        if not next_url:
+            next_url = '/'
+
+        username = request.POST.get('username', None)
+        password = request.POST.get('password', None)
+        confirm_password = request.POST.get('confirm_password', None)
+
+        if username and password and confirm_password and password == confirm_password:
+            if not User.objects.filter(username=username):
+                user = User.objects.create_user(username=username,
+                                                password=password)
+                if user:
+                    auth.login(request, auth.authenticate(username=username, password=password))
+
+        return HttpResponseRedirect(next_url)
+
+
 __all__ = ['IndexView',
            'GenerateView',
-           'SlugRedirectView',]
+           'SlugRedirectView',
+           'APIGenerateView',
+           'APIClickCountView',
+           'StatisticView',
+           'RemarksEditView',
+           'LoginView',
+           'LogoutView',
+           'RegisterView', ]

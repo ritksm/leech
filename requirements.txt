@@ -2,3 +2,9 @@ django
 redis
 django-model-utils
 httpagentparser
+pytz
+hashids
+tornado
+tornado-redis
+fabric
+south

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load tz %}
+{% load staticfiles %}
+
+{% block extra_headers %}
+    <link rel="stylesheet" type="text/css" media="screen" href="{% static "css/jquery.dataTables.css" %}">
+{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <div class="row text-center">
+            <span class="logo">Leech</span>
+        </div>
+        <div class="row">
+            <div class="panel panel-primary">
+                <div class="panel-heading">统计数据</div>
+                <div class="panel-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>统计项</th>
+                                <th>值</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>点击数</td>
+                                <td>{{ click_count }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="panel panel-default">
+                <div class="panel-heading">最新请求列表</div>
+                <div class="panel-body">
+                    <table class="table" id="requestTable">
+                        <thead>
+                            <tr>
+                                <th>User-Agent</th>
+                                <th>来源IP</th>
+                                <th>点击时间</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in click_logs %}
+                                <tr>
+                                    <td><span class="user-agent-span" data-target="tooltip" data-placement="bottom" title="{{ log.user_agent }}">{{ log.user_agent | truncatechars:70 }}</span></td>
+                                    <td>{{ log.remote_address }}</td>
+                                    <td>{{ log.click_time|timezone:"Asia/Shanghai"|date:"Y-m-d H:i" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <a href="/"><button class="btn btn-primary">返回首页</button></a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{% static "js/libs/jquery.dataTables.min.js" %}"></script>
+    <script>
+        $(document).ready(function () {
+            $('.user-agent-span').tooltip();
+            $('#requestTable').dataTable(
+                    {
+                        "bPaginate": true,
+                        "bLengthChange": false,
+                        "bFilter": false,
+                        "bSort": false,
+                        "bInfo": false,
+                        "bAutoWidth": false
+                    }
+            );
+        });
+    </script>
+{% endblock %}
