@@ -12,8 +12,100 @@
     {% endblock %}
 </head>
 <body>
+<nav class="navbar navbar-default" role="navigation">
+  <div class="container-fluid">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">Leech</a>
+    </div>
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav navbar-right">
+        {% if not user.is_authenticated %}
+            <li><a data-toggle="modal" data-target="#loginModal" href="#">登录</a></li>
+            <li><a data-toggle="modal" data-target="#registerModal" href="#">注册</a></li>
+        {% else %}
+            <li><a href="#">{{ user.username }}</a></li>
+            <li><a href="/logout/">登出</a></li>
+        {% endif %}
+      </ul>
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>
 {% block body %}
 {% endblock %}
+
+
+<!-- Login Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="loginModalLabel">登录</h4>
+            </div>
+            <form action="/login/?next={{ request.get_full_path }}" method="post" role="form">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="usernameInput">用户名</label>
+                        <input type="text" name="username" id="usernameInput" class="form-control" placeholder="用户名">
+                    </div>
+                    <div class="form-group">
+                        <label for="passwordInput">密码</label>
+                        <input type="password" name="password" id="passwordInput" class="form-control" placeholder="密码">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">登录</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Register Modal -->
+<div class="modal fade" id="registerModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="registerModalLabel">注册</h4>
+            </div>
+            <form action="/register/?next={{ request.get_full_path }}" method="post" role="form">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="usernameInput">用户名</label>
+                        <input type="text" name="username" id="usernameInput" class="form-control" placeholder="用户名">
+                    </div>
+                    <div class="form-group">
+                        <label for="passwordInput">密码</label>
+                        <input type="password" name="password" id="passwordInput" class="form-control" placeholder="密码">
+                    </div>
+                    <div class="form-group">
+                        <label for="passwordConfirmInput">确认密码</label>
+                        <input type="password" name="confirm_password" id="passwordConfirmInput" class="form-control" placeholder="确认密码">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">登录</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 <script src="{% static "js/libs/jquery-2.0.2.min.js" %}"></script>
 <script src="{% static "js/libs/bootstrap.min.js" %}"></script>
 {% block scripts %}

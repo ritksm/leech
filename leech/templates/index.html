@@ -2,10 +2,7 @@
 
 {% block body %}
     <div class="container">
-        <div class="row text-center">
-            <span class="logo">Leech</span>
-        </div>
-        <div class="row">
+        <div class="row short-box">
             <form action="/generate/" method="post" role="form">
                 {% csrf_token %}
                 <div class="form-group">
@@ -75,9 +72,11 @@
 {% endblock %}
 {% block scripts %}
     <script>
-        $(".remarks-edit").click(function () {
-            $("#remarksEditModal").modal();
-            $("#remarksId").val($(this).attr('url-id'));
+        $('document').ready(function () {
+            $(".remarks-edit").click(function () {
+                $("#remarksEditModal").modal();
+                $("#remarksId").val($(this).attr('url-id'));
+            })
         })
     </script>
 {% endblock %}

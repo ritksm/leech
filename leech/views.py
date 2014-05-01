@@ -12,6 +12,8 @@ from django.http.response import HttpResponseBadRequest, HttpResponseRedirect, H
 from django.core.urlresolvers import reverse
 from leech.models import *
 import threading
+from django.contrib.auth.models import User
+from django.contrib import auth
 
 
 class IndexView(TemplateView):
@@ -23,11 +25,14 @@ class IndexView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(IndexView, self).get_context_data(**kwargs)
 
-        user_uuid = self.request.COOKIES.get(settings.COOKIE_NAME_FOR_UUID, None)
-        if user_uuid:
-            slugs = ShortenUrl.objects.get_by_uuid(user_uuid=user_uuid)
+        if self.request.user.is_authenticated():
+            slugs = ShortenUrl.objects.get_by_user(user=self.request.user)
         else:
-            slugs = []
+            user_uuid = self.request.COOKIES.get(settings.COOKIE_NAME_FOR_UUID, None)
+            if user_uuid:
+                slugs = ShortenUrl.objects.get_by_uuid(user_uuid=user_uuid)
+            else:
+                slugs = []
 
         context['slugs'] = slugs
         context['redirect_base_url'] = settings.REDIRECT_BASE_URL
@@ -58,7 +63,12 @@ class GenerateView(View):
         else:
             user_uuid = request.COOKIES.get(settings.COOKIE_NAME_FOR_UUID)
 
-        ShortenUrl.objects.shorten_url(url=source_url, user_uuid=user_uuid)
+        if request.user.is_authenticated():
+            # associate url with user
+            ShortenUrl.objects.shorten_url(url=source_url, user=request.user)
+        else:
+            # associate url with user_uuid when user is not authenticated
+            ShortenUrl.objects.shorten_url(url=source_url, user_uuid=user_uuid)
 
         response = HttpResponseRedirect(reverse('index'))
         response.set_cookie(settings.COOKIE_NAME_FOR_UUID, user_uuid, max_age=31536000)
@@ -191,10 +201,66 @@ class StatisticView(TemplateView):
         return super(StatisticView, self).get(request, *args, **kwargs)
 
 
+class LoginView(View):
+    """ user login view
+    """
+
+    def post(self, request):
+        next_url = request.GET.get('next', None)
+        if not next_url:
+            next_url = '/'
+        username = request.POST.get('username', None)
+        password = request.POST.get('password', None)
+
+        if username and password:
+            user = auth.authenticate(username=username, password=password)
+            if user:
+                auth.login(request, user)
+
+        return HttpResponseRedirect(next_url)
+
+
+class LogoutView(View):
+    """ user logout view
+    """
+
+    def get(self, request):
+        if request.user.is_authenticated():
+            auth.logout(request)
+
+        return HttpResponseRedirect('/')
+
+
+class RegisterView(View):
+    """ user register view
+    """
+
+    def post(self, request):
+        next_url = request.GET.get('next', None)
+        if not next_url:
+            next_url = '/'
+
+        username = request.POST.get('username', None)
+        password = request.POST.get('password', None)
+        confirm_password = request.POST.get('confirm_password', None)
+
+        if username and password and confirm_password and password == confirm_password:
+            if not User.objects.filter(username=username):
+                user = User.objects.create_user(username=username,
+                                                password=password)
+                if user:
+                    auth.login(request, auth.authenticate(username=username, password=password))
+
+        return HttpResponseRedirect(next_url)
+
+
 __all__ = ['IndexView',
            'GenerateView',
            'SlugRedirectView',
            'APIGenerateView',
            'APIClickCountView',
            'StatisticView',
-           'RemarksEditView',]
+           'RemarksEditView',
+           'LoginView',
+           'LogoutView',
+           'RegisterView', ]

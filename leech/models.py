@@ -16,13 +16,14 @@ from django.conf import settings
 from django.db import models
 from model_utils import Choices
 import httpagentparser
+from django.contrib.auth.models import User
 
 
 class ShortenUrlManager(models.Manager):
     """ shorten url model manager
     """
 
-    def shorten_url(self, url, user_uuid=None):
+    def shorten_url(self, url, user_uuid=None, user=None):
         """ Adds a long URL to the database
         """
         parse_result = urlparse(url)
@@ -33,7 +34,8 @@ class ShortenUrlManager(models.Manager):
                            parse_result.fragment])
 
         shorten_url = super(ShortenUrlManager, self).create(source_url=url,
-                                                            user_uuid=user_uuid)
+                                                            user_uuid=user_uuid,
+                                                            user=user)
         slug = Hashids(salt=settings.HASH_ID_SALT,
                        min_length=settings.HASH_ID_MIN_LENGTH).encrypt(shorten_url.pk)
         shorten_url.slug = slug
@@ -45,6 +47,9 @@ class ShortenUrlManager(models.Manager):
 
     def get_by_uuid(self, user_uuid):
         return self.filter(user_uuid=user_uuid)
+
+    def get_by_user(self, user):
+        return self.filter(user=user)
 
     def get_source_url(self, slug):
         if not slug:
@@ -88,6 +93,7 @@ class ShortenUrl(models.Model):
     remarks = models.CharField(max_length=255, verbose_name='Remarks', blank=True, default='')
     create_time = models.DateTimeField(verbose_name='Create Time', auto_now_add=True)
     user_uuid = models.CharField(max_length=64, verbose_name='UUID', null=True)
+    user = models.ForeignKey(User, verbose_name='User', related_name='urls', null=True)
 
     class Meta(object):
         app_label = 'leech'
