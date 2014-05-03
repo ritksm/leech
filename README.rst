@@ -1,7 +1,7 @@
 Leech
 =====
 
-A simple url shorten service based on Django, Redis and SQLite
+A simple url shorten service based on Django, Redis and SQLite with an optional Tornado redirect handler.
 
 Prerequisites
 -------------
@@ -25,6 +25,10 @@ Usage
     $ python manage.py runserver
 6. Visit:
     http://localhost:8000/
+
+Tornado Redirect
+----------------
+If you want to use Tornado as redirect handler(may result in better performance), you can use ProxyPass in Nginx or Apache to rewrite the /go/ location to the tornado handler.
 
 License
 -------
