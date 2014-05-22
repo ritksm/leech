@@ -2,6 +2,9 @@
 
 {% block body %}
     <div class="container">
+        <div class="row text-center">
+            <span class="logo">Leech</span>
+        </div>
         <div class="row short-box">
             <form action="/generate/" method="post" role="form">
                 {% csrf_token %}
@@ -30,7 +33,7 @@
                     <tr>
                         <td><a href="{{ redirect_base_url }}{{ slug.slug }}" target="_blank">
                             {{ redirect_base_url }}{{ slug.slug }}</a></td>
-                        <td><a href="{{ slug.source_url }}" target="_blank">{{ slug.source_url }}</a></td>
+                        <td><a href="{{ slug.source_url }}" title="{{ slug.source_url }}" target="_blank">{{ slug.source_url|truncatechars:50 }}</a></td>
                         <td>{{ slug.remarks }}
                             <i class="glyphicon glyphicon-edit remarks-edit" url-id="{{ slug.pk }}"></i>
                         </td>
