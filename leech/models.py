@@ -120,6 +120,9 @@ class ShortenUrl(models.Model):
             count = 0
         return int(count)
 
+    def get_recent_daily_click_counts(self):
+        return DailyClickCount.objects.filter(shorten_url=self).order_by('-date')[:7]
+
 
 class ClickLogManager(models.Manager):
     """ url click log model manager
@@ -226,7 +229,22 @@ class ClickLogAttribute(models.Model):
         return self.__repr__()
 
 
+class DailyClickCount(models.Model):
+    """ daily click count model
+    """
+
+    shorten_url = models.ForeignKey(ShortenUrl, verbose_name='Shorten URL', related_name='daily_click_counts')
+    date = models.DateField(verbose_name='Count Date')
+    count = models.IntegerField(verbose_name='Click Count')
+
+    class Meta(object):
+        app_label = 'leech'
+        verbose_name = 'Daily Click Count'
+        verbose_name_plural = 'Daily Click Count'
+
+
 __all__ = ['ShortenUrl',
            'ClickLog',
            'ClickLogAttribute',
+           'DailyClickCount',
 ]

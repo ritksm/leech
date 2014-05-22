@@ -13,20 +13,30 @@
         </div>
         <div class="row">
             <div class="panel panel-primary">
+                <div class="panel-heading">最近七天每日点击数据</div>
+                <div class="panel-body">
+                    <div id="dailyCountContainer" style="min-width: 310px; height: 250px; margin: 0 auto">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="panel panel-primary">
                 <div class="panel-heading">统计数据</div>
                 <div class="panel-body">
                     <table class="table">
                         <thead>
-                            <tr>
-                                <th>统计项</th>
-                                <th>值</th>
-                            </tr>
+                        <tr>
+                            <th>统计项</th>
+                            <th>值</th>
+                        </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>点击数</td>
-                                <td>{{ click_count }}</td>
-                            </tr>
+                        <tr>
+                            <td>点击数</td>
+                            <td>{{ click_count }}</td>
+                        </tr>
                         </tbody>
                     </table>
                 </div>
@@ -38,33 +48,39 @@
                 <div class="panel-body">
                     <table class="table" id="requestTable">
                         <thead>
-                            <tr>
-                                <th>User-Agent</th>
-                                <th>来源IP</th>
-                                <th>点击时间</th>
-                            </tr>
+                        <tr>
+                            <th>User-Agent</th>
+                            <th>来源IP</th>
+                            <th>点击时间</th>
+                        </tr>
                         </thead>
                         <tbody>
-                            {% for log in click_logs %}
-                                <tr>
-                                    <td><span class="user-agent-span" data-target="tooltip" data-placement="bottom" title="{{ log.user_agent }}">{{ log.user_agent | truncatechars:70 }}</span></td>
-                                    <td>{{ log.remote_address }}</td>
-                                    <td>{{ log.click_time|timezone:"Asia/Shanghai"|date:"Y-m-d H:i" }}</td>
-                                </tr>
-                            {% endfor %}
+                        {% for log in click_logs %}
+                            <tr>
+                                <td><span class="user-agent-span" data-target="tooltip" data-placement="bottom"
+                                          title="{{ log.user_agent }}">{{ log.user_agent | truncatechars:70 }}</span>
+                                </td>
+                                <td>{{ log.remote_address }}</td>
+                                <td>{{ log.click_time|timezone:"Asia/Shanghai"|date:"Y-m-d H:i" }}</td>
+                            </tr>
+                        {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
         <div class="row">
-            <a href="/"><button class="btn btn-primary">返回首页</button></a>
+            <a href="/">
+                <button class="btn btn-primary">返回首页</button>
+            </a>
         </div>
     </div>
 {% endblock %}
 
 {% block scripts %}
     <script src="{% static "js/libs/jquery.dataTables.min.js" %}"></script>
+    <script src="{% static "js/highcharts/highcharts.js" %}"></script>
+    <script src="{% static "js/highcharts/modules/exporting.js" %}"></script>
     <script>
         $(document).ready(function () {
             $('.user-agent-span').tooltip();
@@ -78,6 +94,51 @@
                         "bAutoWidth": false
                     }
             );
+        });
+    </script>
+
+    <script type="text/javascript">
+        $(function () {
+            $('#dailyCountContainer').highcharts({
+                title: {
+                    text: '每日链接点击统计图',
+                    x: -20 //center
+                },
+                subtitle: {
+                    text: '最近七天',
+                    x: -20
+                },
+                xAxis: {
+                    categories: {{ daily_click_counts_name|safe }}
+                },
+                yAxis: {
+                    title: {
+                        text: '次数'
+                    },
+                    plotLines: [
+                        {
+                            value: 0,
+                            width: 1,
+                            color: '#808080'
+                        }
+                    ]
+                },
+                tooltip: {
+                    valueSuffix: '次'
+                },
+                legend: {
+                    layout: 'vertical',
+                    align: 'right',
+                    verticalAlign: 'middle',
+                    borderWidth: 0
+                },
+                series: [
+                    {
+                        name: '链接点击',
+                        data: {{ daily_click_counts_count|safe }}
+                    }
+                ]
+            });
         });
     </script>
 {% endblock %}
