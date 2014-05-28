@@ -46,10 +46,10 @@ class ShortenUrlManager(models.Manager):
         return shorten_url
 
     def get_by_uuid(self, user_uuid):
-        return self.filter(user_uuid=user_uuid)
+        return self.filter(user_uuid=user_uuid).order_by('-create_time')
 
     def get_by_user(self, user):
-        return self.filter(user=user)
+        return self.filter(user=user).order_by('-create_time')
 
     def get_source_url(self, slug):
         if not slug:
@@ -121,7 +121,7 @@ class ShortenUrl(models.Model):
         return int(count)
 
     def get_recent_daily_click_counts(self):
-        return DailyClickCount.objects.filter(shorten_url=self).order_by('-date')[:7]
+        return DailyClickCount.objects.filter(shorten_url=self).order_by('date')[:7]
 
 
 class ClickLogManager(models.Manager):

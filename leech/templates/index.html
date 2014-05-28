@@ -1,4 +1,9 @@
 {% extends "base.html" %}
+{% load staticfiles %}
+
+{% block extra_headers %}
+    <link rel="stylesheet" type="text/css" media="screen" href="{% static "css/jquery.dataTables.css" %}">
+{% endblock %}
 
 {% block body %}
     <div class="container">
@@ -18,7 +23,7 @@
             </form>
         </div>
         <div class="row">
-            <table class="table">
+            <table class="table" id="urlTable">
                 <thead>
                 <tr>
                     <td>短地址</td>
@@ -74,12 +79,22 @@
 
 {% endblock %}
 {% block scripts %}
+    <script src="{% static "js/libs/jquery.dataTables.min.js" %}"></script>
     <script>
         $('document').ready(function () {
             $(".remarks-edit").click(function () {
                 $("#remarksEditModal").modal();
                 $("#remarksId").val($(this).attr('url-id'));
             })
+
+            $('#urlTable').dataTable(
+                    {
+                        "bPaginate": true,
+                        "bInfo": false,
+                        "bSort": false,
+                        "bLengthChange": false
+                    }
+            );
         })
     </script>
 {% endblock %}
