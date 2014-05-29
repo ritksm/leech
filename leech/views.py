@@ -196,7 +196,7 @@ class StatisticView(TemplateView):
 
         context['daily_click_counts_name'] = []
         context['daily_click_counts_count'] = []
-        for count in shorten_url.get_recent_daily_click_counts():
+        for count in reversed(shorten_url.get_recent_daily_click_counts()):
             context['daily_click_counts_name'].append(count.date.strftime('%Y-%m-%d'))
             context['daily_click_counts_count'].append(count.count)
         context['daily_click_counts_name'] = json.dumps(context['daily_click_counts_name'])
