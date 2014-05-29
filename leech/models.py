@@ -121,7 +121,7 @@ class ShortenUrl(models.Model):
         return int(count)
 
     def get_recent_daily_click_counts(self):
-        return DailyClickCount.objects.filter(shorten_url=self).order_by('date')[:7]
+        return DailyClickCount.objects.filter(shorten_url=self).order_by('-date')[:7]
 
 
 class ClickLogManager(models.Manager):
