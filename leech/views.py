@@ -8,12 +8,14 @@ import uuid
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView, View
-from django.http.response import HttpResponseBadRequest, HttpResponseRedirect, HttpResponse
+from django.http.response import HttpResponseBadRequest, HttpResponseRedirect, HttpResponse, HttpResponseForbidden
 from django.core.urlresolvers import reverse
 from leech.models import *
 import threading
 from django.contrib.auth.models import User
 from django.contrib import auth
+from django.utils.decorators import method_decorator
+from leech.utils import login_required_for_private_site
 
 
 class IndexView(TemplateView):
@@ -40,7 +42,9 @@ class IndexView(TemplateView):
 
         return context
 
+    @method_decorator(login_required_for_private_site)
     def get(self, request, *args, **kwargs):
+
         response = super(IndexView, self).get(request, *args, **kwargs)
         # set uuid cookie
         if not settings.COOKIE_NAME_FOR_UUID in self.request.COOKIES.keys():
@@ -53,6 +57,7 @@ class GenerateView(View):
     """ generate slug from source_url
     """
 
+    @method_decorator(login_required_for_private_site)
     def post(self, request):
         source_url = request.POST.get('url', '')
         if not source_url:
@@ -146,6 +151,7 @@ class RemarksEditView(View):
     """ edit url remarks
     """
 
+    @method_decorator(login_required_for_private_site)
     def post(self, request):
         slug_id = request.POST.get('pk', None)
         remarks = request.POST.get('remarks', None)
@@ -204,15 +210,30 @@ class StatisticView(TemplateView):
 
         return context
 
+    @method_decorator(login_required_for_private_site)
     def get(self, request, *args, **kwargs):
         self.slug = kwargs.pop('slug')
         return super(StatisticView, self).get(request, *args, **kwargs)
 
 
-class LoginView(View):
+class LoginView(TemplateView):
     """ user login view
     """
 
+    template_name = 'login.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(LoginView, self).get_context_data(**kwargs)
+        context['next_url'] = self.request.GET.get('next')
+        return context
+
+    def get(self, request, *args, **kwargs):
+        if request.user and request.user.is_authenticated():
+            next_url = request.GET.get('next', '/')
+            return HttpResponseRedirect(next_url)
+        else:
+            return super(LoginView, self).get(request, *args, **kwargs)
+        
     def post(self, request):
         next_url = request.GET.get('next', None)
         if not next_url:
@@ -244,6 +265,10 @@ class RegisterView(View):
     """
 
     def post(self, request):
+        if not settings.REGISTER_OPEN:
+            # register off
+            return HttpResponse('<p>注册已关闭，请联系管理员。</p><a href="/">点击返回主页</a>')
+
         next_url = request.GET.get('next', None)
         if not next_url:
             next_url = '/'
