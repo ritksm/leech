@@ -99,7 +99,7 @@ class RedirectLoggerThread(threading.Thread):
         return ip
 
     def run(self):
-        shorten_url = ShortenUrl.objects.filter(slug=self.slug)
+        shorten_url = ShortenUrl.objects.filter(slug__exact=self.slug)
         if not shorten_url.exists():
             return
         else:
@@ -171,7 +171,7 @@ class APIClickCountView(View):
     """
 
     def get(self, request, slug):
-        shorten_url = ShortenUrl.objects.filter(slug=slug)
+        shorten_url = ShortenUrl.objects.filter(slug__exact=slug)
         if not shorten_url.exists():
             return HttpResponseBadRequest()
 
@@ -191,7 +191,7 @@ class StatisticView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(StatisticView, self).get_context_data(**kwargs)
 
-        shorten_url = ShortenUrl.objects.filter(slug=self.slug)
+        shorten_url = ShortenUrl.objects.filter(slug__exact=self.slug)
         if not shorten_url.exists():
             return HttpResponseBadRequest()
         else:
