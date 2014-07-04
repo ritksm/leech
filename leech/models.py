@@ -59,7 +59,7 @@ class ShortenUrlManager(models.Manager):
         if source_url:
             return source_url
 
-        source_url = self.filter(slug=slug)
+        source_url = self.filter(slug__exact=slug)
         if source_url.exists():
             source_url = source_url[0]
             self._save_to_redis_cache(source_url.source_url, source_url.slug)
@@ -154,12 +154,12 @@ class ClickLogManager(models.Manager):
         return click_log
 
     def get_logs_by_slug(self, slug):
-        return self.filter(shorten_url__slug=slug)
+        return self.filter(shorten_url__slug__exact=slug)
 
     def create_log_by_redis_log(self, log):
         user_agent = log['user-agent']
         remote_address = log['ip']
-        shorten_url = ShortenUrl.objects.get(slug=log['slug'])
+        shorten_url = ShortenUrl.objects.get(slug__exact=log['slug'])
         click_time = datetime.datetime.fromtimestamp(log['timestamp']).replace(tzinfo=pytz.timezone(settings.TIME_ZONE))
         log = self.create_log(shorten_url, user_agent, remote_address, click_time=click_time)
 
