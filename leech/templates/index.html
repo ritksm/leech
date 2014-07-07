@@ -36,8 +36,11 @@
                 <tbody>
                 {% for slug in slugs %}
                     <tr>
-                        <td><a href="{{ redirect_base_url }}{{ slug.slug }}" target="_blank">
-                            {{ redirect_base_url }}{{ slug.slug }}</a></td>
+                        <td>
+                            <a href="{{ redirect_base_url }}{{ slug.slug }}" target="_blank">
+                            {{ redirect_base_url }}{{ slug.slug }}
+                            </a>  <a href="{{ redirect_base_url }}{{ slug.slug }}" class="btn btn-xs btn-primary copy-link">复制链接</a>
+                        </td>
                         <td><a href="{{ slug.source_url }}" title="{{ slug.source_url }}" target="_blank">{{ slug.source_url|truncatechars:50 }}</a></td>
                         <td>{{ slug.remarks }}
                             <i class="glyphicon glyphicon-edit remarks-edit" url-id="{{ slug.pk }}"></i>
@@ -81,12 +84,17 @@
 {% block scripts %}
     <script src="{% static "js/libs/jquery.dataTables.min.js" %}"></script>
     <script src="{% static "js/libs/dataTables.bootstrap.js" %}"></script>
+    <script src="{% static "js/libs/jquery-clipboard/jquery.clipboard.js" %}"></script>
     <script>
         $('document').ready(function () {
             $(".remarks-edit").click(function () {
                 $("#remarksEditModal").modal();
                 $("#remarksId").val($(this).attr('url-id'));
-            })
+            });
+
+            $("#remarksEditModal").on("shown.bs.modal", function () {
+                $("#remarksInput").focus();
+            });
 
             $('#urlTable').dataTable(
                     {
@@ -96,6 +104,27 @@
                         "bLengthChange": false
                     }
             );
+
+            var copy_sel = $(".copy-link");
+
+            copy_sel.on('click', function(e) {
+                e.preventDefault();
+            });
+
+            copy_sel.clipboard({
+                path: "{% static "js/libs/jquery-clipboard/jquery.clipboard.swf" %}",
+
+                copy: function() {
+                    var this_sel = $(this);
+
+                    // Return text in closest element (useful when you have multiple boxes that can be copied)
+                    this_sel.text("链接已复制");
+                    setTimeout(function () {
+                        this_sel.text("复制链接");
+                    }, 2000);
+                    return this_sel.attr("href");
+                }
+            });
         })
     </script>
 {% endblock %}
