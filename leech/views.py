@@ -8,7 +8,7 @@ import uuid
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView, View
-from django.http.response import HttpResponseBadRequest, HttpResponseRedirect, HttpResponse, HttpResponseForbidden
+from django.http.response import HttpResponseBadRequest, HttpResponseRedirect, HttpResponse, HttpResponseForbidden, HttpResponseNotFound
 from django.core.urlresolvers import reverse
 from leech.models import *
 import threading
@@ -191,11 +191,7 @@ class StatisticView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(StatisticView, self).get_context_data(**kwargs)
 
-        shorten_url = ShortenUrl.objects.filter(slug__exact=self.slug)
-        if not shorten_url.exists():
-            return HttpResponseBadRequest()
-        else:
-            shorten_url = shorten_url[0]
+        shorten_url = ShortenUrl.objects.get(slug__exact=self.slug)
 
         context['click_logs'] = shorten_url.click_logs.all().order_by('-click_time')[:100]
         context['click_count'] = shorten_url.click_count()
@@ -207,12 +203,30 @@ class StatisticView(TemplateView):
             context['daily_click_counts_count'].append(count.count)
         context['daily_click_counts_name'] = json.dumps(context['daily_click_counts_name'])
         context['daily_click_counts_count'] = json.dumps(context['daily_click_counts_count'])
+        context['slug'] = shorten_url
 
         return context
 
     @method_decorator(login_required_for_private_site)
     def get(self, request, *args, **kwargs):
         self.slug = kwargs.pop('slug')
+        shorten_url = ShortenUrl.objects.filter(slug__exact=self.slug)
+
+        if not shorten_url.exists():
+            return HttpResponseNotFound()
+        else:
+            shorten_url = shorten_url[0]
+
+        # if url is not created by this user, stat view should return http 403 forbidden
+        is_owner = False
+        if request.user and request.user.is_authenticated():
+            is_owner = ShortenUrl.objects.is_slug_created_by_user(shorten_url.slug, user_id=request.user.pk, user_uuid=None)
+        else:
+            user_uuid = request.COOKIES.get(settings.COOKIE_NAME_FOR_UUID, None)
+            is_owner = ShortenUrl.objects.is_slug_created_by_user(shorten_url.slug, user_id=None, user_uuid=user_uuid)
+        if not is_owner:
+            return HttpResponseForbidden()
+
         return super(StatisticView, self).get(request, *args, **kwargs)
 
 
@@ -287,6 +301,53 @@ class RegisterView(View):
         return HttpResponseRedirect(next_url)
 
 
+class ChangeSourceUrlView(View):
+    """ change source url of shorten url
+    """
+
+    def post(self, request):
+        slug_id = request.POST.get('pk', None)
+        new_source_url = request.POST.get('sourceUrl', None)
+        if not (slug_id and new_source_url):
+            return HttpResponseRedirect('/')
+
+        slug = ShortenUrl.objects.filter(pk=slug_id)
+        if not slug.exists():
+            return HttpResponseRedirect('/')
+        else:
+            slug = slug[0]
+
+        slug.change_source_url(new_source_url)
+
+        return HttpResponseRedirect('/')
+
+
+class ResetSlugTotalClickCountView(View):
+    """ reset the total click count of slug
+    """
+
+    def get(self, request, slug):
+        shorten_url = ShortenUrl.objects.filter(slug=slug)
+        if not shorten_url.exists():
+            return HttpResponseNotFound()
+        else:
+            shorten_url = shorten_url[0]
+
+        # if url is not created by this user, reset should not be allowed
+        is_owner = False
+        if request.user and request.user.is_authenticated():
+            is_owner = ShortenUrl.objects.is_slug_created_by_user(shorten_url.slug, user_id=request.user.pk, user_uuid=None)
+        else:
+            user_uuid = request.COOKIES.get(settings.COOKIE_NAME_FOR_UUID, None)
+            is_owner = ShortenUrl.objects.is_slug_created_by_user(shorten_url.slug, user_id=None, user_uuid=user_uuid)
+        if not is_owner:
+            return HttpResponseForbidden()
+
+        shorten_url.reset_total_click_count()
+
+        return HttpResponseRedirect(reverse('statistic', kwargs={'slug': shorten_url.slug}))
+
+
 __all__ = ['IndexView',
            'GenerateView',
            'SlugRedirectView',
@@ -296,4 +357,7 @@ __all__ = ['IndexView',
            'RemarksEditView',
            'LoginView',
            'LogoutView',
-           'RegisterView', ]
+           'RegisterView',
+           'ChangeSourceUrlView',
+           'ResetSlugTotalClickCountView',
+           ]

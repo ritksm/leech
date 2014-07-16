@@ -39,6 +39,7 @@
                         </tr>
                         </tbody>
                     </table>
+                    <button id="resetCountButton" class="btn btn-danger">重置点击数</button>
                 </div>
             </div>
         </div>
@@ -75,6 +76,27 @@
             </a>
         </div>
     </div>
+
+    <div class="modal fade" id="myModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span
+                            aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title">是否确定重置点击统计</h4>
+                </div>
+                <div class="modal-body">
+                    <p class="text-danger">点击总数统计将会被重置为0！且不可以恢复，请确认。</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <a href="/stat/total_click_count/reset/{{ slug.slug }}/" type="button" class="btn btn-primary">确定重置</a>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div><!-- /.modal -->
 {% endblock %}
 
 {% block scripts %}
@@ -84,7 +106,12 @@
     <script src="{% static "js/libs/dataTables.bootstrap.js" %}"></script>
     <script>
         $(document).ready(function () {
+            $('#resetCountButton').click(function() {
+                $('#myModal').modal('show');
+            });
+
             $('.user-agent-span').tooltip();
+
             $('#requestTable').dataTable(
                     {
                         "bPaginate": true,

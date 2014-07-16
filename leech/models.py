@@ -82,6 +82,30 @@ class ShortenUrlManager(models.Manager):
         else:
             return redis_server.get(name)
 
+    def is_slug_created_by_user(self, slug, user_id, user_uuid):
+        shorten_url = ShortenUrl.objects.filter(slug=slug)
+        if not shorten_url.exists():
+            return False
+        else:
+            shorten_url = shorten_url[0]
+
+        if user_id:
+            user = User.objects.filter(pk=user_id)
+            if not user.exists():
+                return False
+            else:
+                user = user[0]
+            if shorten_url.user:
+                return shorten_url.user == user
+            else:
+                return False
+
+        if user_uuid:
+            if shorten_url.user_uuid:
+                return shorten_url.user_uuid == user_uuid
+            else:
+                return False
+
 
 class ShortenUrl(models.Model):
     """ shorten url model
@@ -122,6 +146,22 @@ class ShortenUrl(models.Model):
 
     def get_recent_daily_click_counts(self):
         return DailyClickCount.objects.filter(shorten_url=self).order_by('-date')[:7]
+
+    def change_source_url(self, new_source_url):
+        """ change slug source url
+        """
+        self.source_url = new_source_url
+        self.save()
+
+        # update redirect redis cache
+        name = settings.REDIS_SHORTEN_URL_NAME.format(slug=self.slug)
+        redis_server = redis.Redis(**settings.REDIS_HOST)
+        redis_server.set(name, new_source_url)
+
+    def reset_total_click_count(self):
+        name = settings.REDIS_CLICK_COUNT_NAME.format(slug=self.slug)
+        redis_server = redis.Redis(**settings.REDIS_HOST)
+        redis_server.set(name, 0)
 
 
 class ClickLogManager(models.Manager):
