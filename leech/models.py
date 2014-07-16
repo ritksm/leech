@@ -123,6 +123,17 @@ class ShortenUrl(models.Model):
     def get_recent_daily_click_counts(self):
         return DailyClickCount.objects.filter(shorten_url=self).order_by('-date')[:7]
 
+    def change_source_url(self, new_source_url):
+        """ change slug source url
+        """
+        self.source_url = new_source_url
+        self.save()
+
+        # update redirect redis cache
+        name = settings.REDIS_SHORTEN_URL_NAME.format(slug=self.slug)
+        redis_server = redis.Redis(**settings.REDIS_HOST)
+        redis_server.set(name, new_source_url)
+
 
 class ClickLogManager(models.Manager):
     """ url click log model manager

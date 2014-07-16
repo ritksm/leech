@@ -41,7 +41,7 @@
                             {{ redirect_base_url }}{{ slug.slug }}
                             </a>  <a href="{{ redirect_base_url }}{{ slug.slug }}" class="btn btn-xs btn-primary copy-link pull-right">复制链接</a>
                         </td>
-                        <td><a href="{{ slug.source_url }}" title="{{ slug.source_url }}" target="_blank">{{ slug.source_url|truncatechars:50 }}</a></td>
+                        <td><a href="{{ slug.source_url }}" title="{{ slug.source_url }}" target="_blank">{{ slug.source_url|truncatechars:50 }}</a>  <i class="glyphicon glyphicon-edit source-url-edit" url-id="{{ slug.pk }}"></i></td>
                         <td>{{ slug.remarks }}
                             <i class="glyphicon glyphicon-edit remarks-edit" url-id="{{ slug.pk }}"></i>
                         </td>
@@ -80,6 +80,33 @@
         </div>
     </div>
 
+    <!-- Modal source url edit -->
+    <div class="modal fade" id="sourceUrlEditModal" tabindex="-1" role="dialog" aria-labelledby="sourceUrlEditModalTitle"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="sourceUrlEditModalTitle">修改原始链接</h4>
+                </div>
+                <form action="/slug/source/edit/" method="post" role="form">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="sourceInput">新的原始链接</label>
+                            <input type="text" name="sourceUrl" class="form-control" id="sourceInput" placeholder="新的原始链接">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                        <button type="submit" class="btn btn-primary">提交修改</button>
+                    </div>
+                    <input type="hidden" id="slugId" name="pk">
+                </form>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}
 {% block scripts %}
     <script src="{% static "js/libs/jquery.dataTables.min.js" %}"></script>
@@ -87,6 +114,11 @@
     <script src="{% static "js/libs/jquery-clipboard/jquery.clipboard.js" %}"></script>
     <script>
         $('document').ready(function () {
+            $(".source-url-edit").click(function () {
+                $("#sourceUrlEditModal").modal();
+                $("#slugId").val($(this).attr('url-id'));
+            });
+
             $(".remarks-edit").click(function () {
                 $("#remarksEditModal").modal();
                 $("#remarksId").val($(this).attr('url-id'));

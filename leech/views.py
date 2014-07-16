@@ -287,6 +287,27 @@ class RegisterView(View):
         return HttpResponseRedirect(next_url)
 
 
+class ChangeSourceUrlView(View):
+    """ change source url of shorten url
+    """
+
+    def post(self, request):
+        slug_id = request.POST.get('pk', None)
+        new_source_url = request.POST.get('sourceUrl', None)
+        if not (slug_id and new_source_url):
+            return HttpResponseRedirect('/')
+
+        slug = ShortenUrl.objects.filter(pk=slug_id)
+        if not slug.exists():
+            return HttpResponseRedirect('/')
+        else:
+            slug = slug[0]
+
+        slug.change_source_url(new_source_url)
+
+        return HttpResponseRedirect('/')
+
+
 __all__ = ['IndexView',
            'GenerateView',
            'SlugRedirectView',
@@ -296,4 +317,6 @@ __all__ = ['IndexView',
            'RemarksEditView',
            'LoginView',
            'LogoutView',
-           'RegisterView', ]
+           'RegisterView',
+           'ChangeSourceUrlView',
+           ]
