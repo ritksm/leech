@@ -348,6 +348,32 @@ class ResetSlugTotalClickCountView(View):
         return HttpResponseRedirect(reverse('statistic', kwargs={'slug': shorten_url.slug}))
 
 
+class HideSlugView(View):
+    """ set slug is_show to false
+    """
+
+    def get(self, request, slug_id):
+        shorten_url = ShortenUrl.objects.filter(pk=slug_id)
+        if not shorten_url.exists():
+            return HttpResponseNotFound()
+        else:
+            shorten_url = shorten_url[0]
+
+        # if url is not created by this user, reset should not be allowed
+        is_owner = False
+        if request.user and request.user.is_authenticated():
+            is_owner = ShortenUrl.objects.is_slug_created_by_user(shorten_url.slug, user_id=request.user.pk, user_uuid=None)
+        else:
+            user_uuid = request.COOKIES.get(settings.COOKIE_NAME_FOR_UUID, None)
+            is_owner = ShortenUrl.objects.is_slug_created_by_user(shorten_url.slug, user_id=None, user_uuid=user_uuid)
+        if not is_owner:
+            return HttpResponseForbidden()
+
+        shorten_url.hide()
+
+        return HttpResponseRedirect(reverse('index'))
+
+
 __all__ = ['IndexView',
            'GenerateView',
            'SlugRedirectView',
@@ -360,4 +386,5 @@ __all__ = ['IndexView',
            'RegisterView',
            'ChangeSourceUrlView',
            'ResetSlugTotalClickCountView',
+           'HideSlugView',
            ]

@@ -19,4 +19,5 @@ urlpatterns = patterns('',
     url(r'^slug/source/edit/', ChangeSourceUrlView.as_view(), name='change-source-url'),
     url(r'^stat/total_click_count/reset/(?P<slug>\w+)/', ResetSlugTotalClickCountView.as_view(),
         name='reset-total-click-count'),
+    url(r'^slug/hide/(?P<slug_id>\d+)/', HideSlugView.as_view(), name='hide-slug'),
 )

@@ -30,7 +30,7 @@
                     <td>源地址</td>
                     <td>备注</td>
                     <td>点击数</td>
-                    <td>统计数据</td>
+                    <td>操作</td>
                 </tr>
                 </thead>
                 <tbody>
@@ -46,7 +46,10 @@
                             <i class="glyphicon glyphicon-edit remarks-edit" url-id="{{ slug.pk }}"></i>
                         </td>
                         <td>{{ slug.click_count }}</td>
-                        <td><a href="{{ stat_base_url }}{{ slug.slug }}" target="_self">点击查看</a></td>
+                        <td>
+                            <a class="btn btn-info btn-xs" href="{{ stat_base_url }}{{ slug.slug }}" target="_self">查看详情</a>
+                            <button class="btn btn-danger btn-xs hide-slug" url-id="{{ slug.pk }}">隐藏</button>
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>
@@ -107,6 +110,27 @@
         </div>
     </div>
 
+    <!-- Modal source url edit -->
+    <div class="modal fade" id="hideSlugModal" tabindex="-1" role="dialog" aria-labelledby="hideSlugModalTitle"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="hideSlugModalTitle">隐藏该链接</h4>
+                </div>
+                    <div class="modal-body">
+                        <p class="text-danger">是否确定隐藏，不可恢复，但是仍可以访问</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                        <a href="" id="hideSlugLink" class="btn btn-danger">确定隐藏</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}
 {% block scripts %}
     <script src="{% static "js/libs/jquery.dataTables.min.js" %}"></script>
@@ -117,6 +141,11 @@
             $(".source-url-edit").click(function () {
                 $("#sourceUrlEditModal").modal();
                 $("#slugId").val($(this).attr('url-id'));
+            });
+
+            $(".hide-slug").click(function() {
+                $("#hideSlugLink").attr("href", "/slug/hide/" + $(this).attr('url-id') + "/");
+                $("#hideSlugModal").modal("show");
             });
 
             $(".remarks-edit").click(function () {
