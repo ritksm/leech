@@ -45,10 +45,10 @@ class ShortenUrlManager(models.Manager):
         return shorten_url
 
     def get_by_uuid(self, user_uuid):
-        return self.filter(user_uuid=user_uuid).order_by('-create_time')
+        return self.filter(user_uuid=user_uuid, is_show=True).order_by('-create_time')
 
     def get_by_user(self, user):
-        return self.filter(user=user).order_by('-create_time')
+        return self.filter(user=user, is_show=True).order_by('-create_time')
 
     def get_source_url(self, slug):
         if not slug:
@@ -117,6 +117,7 @@ class ShortenUrl(models.Model):
     create_time = models.DateTimeField(verbose_name='Create Time', auto_now_add=True)
     user_uuid = models.CharField(max_length=64, verbose_name='UUID', null=True)
     user = models.ForeignKey(User, verbose_name='User', related_name='urls', null=True)
+    is_show = models.BooleanField(verbose_name='Is Show', default=True)
 
     class Meta(object):
         app_label = 'leech'
@@ -161,6 +162,10 @@ class ShortenUrl(models.Model):
         name = settings.REDIS_CLICK_COUNT_NAME.format(slug=self.slug)
         redis_server = redis.Redis(**settings.REDIS_HOST)
         redis_server.set(name, 0)
+
+    def hide(self):
+        self.is_show = False
+        self.save()
 
 
 class ClickLogManager(models.Manager):
