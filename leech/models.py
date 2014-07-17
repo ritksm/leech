@@ -29,9 +29,8 @@ class ShortenUrlManager(models.Manager):
         parse_result = urlparse(url)
         if not parse_result.scheme:
             # url scheme not provided, add 'http' as default
-            url = ''.join(['http://', parse_result.netloc, parse_result.path,
-                           parse_result.params, parse_result.query,
-                           parse_result.fragment])
+            url = ''.join(['http://', parse_result.netloc, parse_result.path, '?', parse_result.params,
+                           parse_result.query, parse_result.fragment])
 
         shorten_url = super(ShortenUrlManager, self).create(source_url=url,
                                                             user_uuid=user_uuid,
